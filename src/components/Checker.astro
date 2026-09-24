@@ -1,0 +1,42 @@
+<section id="check" data-rv-block>
+  <h2 data-i="chkH">Check your own text</h2>
+  <p class="lede" data-i="chkP" style="margin-bottom:20px">Runs in your browser. Nothing is uploaded. It marks the phrases Lugas would cut first.</p>
+  <textarea id="inp" rows="7" spellcheck="false" data-i-ph="chkPh"></textarea>
+  <div class="bar"><button class="btn primary" id="run" data-i="chkRun">Check</button><button class="btn ghost" id="samp" data-i="chkSamp">Load sample</button><span class="score" id="score"></span></div>
+  <div id="out" class="out" hidden></div>
+</section>
+<script>
+import { onLang, lang, t, esc } from "../scripts/i18n.js";
+import { PAT, SAMPLE } from "../scripts/data.js";
+const inp = document.getElementById("inp"), out = document.getElementById("out"), sc = document.getElementById("score");
+function check() {
+  const raw = inp.value;
+  if (!raw.trim()) { out.hidden = true; sc.textContent = ""; return; }
+  const marks = [];
+  PAT.forEach(([re, label]) => { re.lastIndex = 0; let m; while ((m = re.exec(raw))) { if (m[0].length) marks.push([m.index, m.index + m[0].length, label]); if (re.lastIndex === m.index) re.lastIndex++; } });
+  marks.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+  const merged = []; marks.forEach((m) => { if (merged.length && m[0] < merged[merged.length - 1][1]) return; merged.push(m); });
+  let html = "", i = 0, cut = 0; const why = new Map();
+  merged.forEach((m) => { html += esc(raw.slice(i, m[0])) + '<span class="hit" title="' + m[2] + '">' + esc(raw.slice(m[0], m[1])) + "</span>"; i = m[1]; cut += raw.slice(m[0], m[1]).split(/\s+/).filter(Boolean).length; why.set(m[2], (why.get(m[2]) || 0) + 1); });
+  html += esc(raw.slice(i));
+  const total = raw.split(/\s+/).filter(Boolean).length;
+  if (!merged.length) { out.innerHTML = html + '<div class="why">' + t("chkNone") + "</div>"; sc.textContent = ""; }
+  else {
+    out.innerHTML = html + '<div class="why"><ul>' + Array.from(why).sort((a, b) => b[1] - a[1]).map((e) => "<li>" + e[0] + " × " + e[1] + "</li>").join("") + "</ul></div>";
+    sc.textContent = merged.length + " " + t("chkFound") + " " + cut + " " + t("chkWords") + " (" + Math.round(cut / Math.max(total, 1) * 100) + "%)";
+  }
+  out.hidden = false;
+}
+document.getElementById("run").onclick = check;
+document.getElementById("samp").onclick = () => { inp.value = SAMPLE[lang() === "id" ? "id" : "en"]; check(); };
+inp.addEventListener("input", () => { if (!out.hidden) check(); });
+onLang(() => { if (!out.hidden) check(); });
+document.addEventListener("click", (e) => {
+  const b = e.target;
+  if (b.classList && b.classList.contains("copy")) {
+    const txt = b.parentElement.textContent.replace(b.textContent, "");
+    navigator.clipboard && navigator.clipboard.writeText(txt.trim());
+    b.textContent = t("copied"); setTimeout(() => (b.textContent = t("copy")), 1400);
+  }
+});
+</script>

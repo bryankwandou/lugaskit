@@ -1,0 +1,12 @@
+<section id="uses" data-rv-block>
+  <h2 data-i="useH">Where people use it</h2>
+  <p class="lede" data-i="useP">Twelve genres have their own rules. Six that come up most:</p>
+  <div class="uc" id="ucList"></div>
+</section>
+<script>
+import { onLang } from "../scripts/i18n.js";
+import { USE } from "../scripts/content.js";
+onLang((L) => {
+  document.getElementById("ucList").innerHTML = (USE[L] || USE.en).map((u, i) => `<div><span class="uc-n">${String(i + 1).padStart(2, "0")}</span><b>${u[0]}</b><span>${u[1]}</span></div>`).join("");
+});
+</script>

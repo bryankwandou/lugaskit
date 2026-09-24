@@ -1,0 +1,29 @@
+---
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lugas</title>
+<meta name="description" content="A writing skill for Claude and other models: plain, specific text on the first try. Indonesian first, then English.">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark">
+<script is:inline>
+/* Runs before first paint so the stored theme and language direction never flash. */
+(function(){try{var t=localStorage.getItem("lugas-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);
+var l=localStorage.getItem("lugas-lang");if(l){document.documentElement.setAttribute("data-boot-lang",l);if(l==="ar")document.documentElement.dir="rtl"}}catch(e){}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+<slot />
+</div>
+<script>
+import "../scripts/reveal.js";
+</script>
+</body>
+</html>

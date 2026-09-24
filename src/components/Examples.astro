@@ -1,0 +1,21 @@
+<section id="demo" data-rv-block>
+  <h2 data-i="demoH">Sebelum dan sesudah</h2>
+  <p class="lede" data-i="demoP" style="margin-bottom:24px">Fakta dipertahankan. Yang dibuang hanya kata yang tidak membawa isi.</p>
+  <div class="demo">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="pane" id="pane"></div>
+  </div>
+  <p class="prov" data-i="prov"></p>
+</section>
+<script>
+import { onLang, t } from "../scripts/i18n.js";
+import { EX } from "../scripts/data.js";
+let cur = 0;
+function render() {
+  document.getElementById("tabs").innerHTML = EX.map((x, i) => `<button role="tab" aria-selected="${i === cur}" data-n="${i}">${x[0]}</button>`).join("");
+  const x = EX[cur];
+  document.getElementById("pane").innerHTML = `<div class="before fade"><span class="lbl">${t("before")}</span><p>${x[1]}</p></div><div class="after fade"><span class="lbl">${t("after")}</span><p>${x[2]}</p></div>`;
+}
+document.getElementById("tabs").addEventListener("click", (e) => { const n = e.target.dataset.n; if (n !== undefined) { cur = +n; render(); } });
+onLang(render);
+</script>

@@ -1,0 +1,119 @@
+<section id="baf" data-rv-block>
+  <h2 data-i="bafH">Before → after, live</h2>
+  <p class="lede" data-i="bafP">Real pairs from the repo's examples. The flagged phrases are what Lugas cuts first.</p>
+  <div class="baf">
+    <div class="baf-top">
+      <span class="baf-stage" id="bafStage" aria-live="polite"></span>
+      <span class="baf-title" id="bafTitle"></span>
+      <span class="baf-ctl">
+        <button type="button" class="wtplay" id="bafPlay" aria-pressed="false"></button>
+        <button type="button" class="wtplay" id="bafNext" data-i="bafNext">Next</button>
+      </span>
+    </div>
+    <div class="wtprog"><i id="bafBar"></i></div>
+    <div class="baf-body">
+      <div class="baf-pane baf-b"><span class="lbl" data-i="before">Before</span><p id="bafB"></p><span class="baf-count" id="bafCount"></span></div>
+      <div class="baf-pane baf-a"><span class="lbl" data-i="after">After</span><p id="bafA"></p></div>
+    </div>
+    <div class="baf-dots" id="bafDots"></div>
+  </div>
+</section>
+<script>
+import { onLang, lang, t, esc, reduced } from "../scripts/i18n.js";
+import { BAF } from "../scripts/content.js";
+
+const $ = (id) => document.getElementById(id);
+const elB = $("bafB"), elA = $("bafA"), stage = $("bafStage"), bar = $("bafBar"), cnt = $("bafCount");
+const S = { pair: 0, phase: 0, pos: 0, k: 0, playing: !reduced(), timer: 0 };
+const set = () => BAF[lang() === "id" ? "id" : "en"];
+
+/* Split the before text into plain runs and flagged spans (flags matched verbatim). */
+function segments(p) {
+  const hits = [];
+  p.f.forEach((f) => { const i = p.b.indexOf(f); if (i >= 0) hits.push([i, i + f.length]); });
+  hits.sort((a, b) => a[0] - b[0]);
+  const out = []; let i = 0;
+  hits.forEach(([s, e]) => { if (s < i) return; if (s > i) out.push([p.b.slice(i, s), 0]); out.push([p.b.slice(s, e), 1]); i = e; });
+  if (i < p.b.length) out.push([p.b.slice(i), 0]);
+  return out;
+}
+const words = (s) => s.split(/\s+/).filter(Boolean).length;
+
+function paintBefore(p, lit, cut) {
+  let n = 0;
+  elB.innerHTML = segments(p).map(([s, f]) => f ? `<span class="fl${n++ < lit ? " on" : ""}${cut ? " cut" : ""}">${esc(s)}</span>` : esc(s)).join("");
+}
+function label(ph) {
+  stage.textContent = t(["bafS1", "bafS2", "bafS3", "bafS4", "bafS4"][ph]);
+  bar.style.width = [(S.pos / Math.max(set()[S.pair].b.length, 1)) * 25, 25 + (S.k / set()[S.pair].f.length) * 25, 70, 75 + (S.pos / Math.max(set()[S.pair].a.length, 1)) * 25, 100][ph] + "%";
+}
+function dots() {
+  $("bafDots").innerHTML = set().map((p, i) => `<button type="button" aria-label="${esc(p.t)}" aria-current="${i === S.pair}" data-p="${i}"></button>`).join("");
+  $("bafTitle").textContent = set()[S.pair].t;
+}
+function count(p) {
+  const flagged = p.f.reduce((a, f) => a + words(f), 0);
+  cnt.textContent = p.f.length + " · " + flagged + "/" + words(p.b);
+}
+
+/* One frame of the state machine. Returns the delay before the next frame. */
+function step() {
+  const p = set()[S.pair];
+  switch (S.phase) {
+    case 0: // type the AI draft
+      S.pos = Math.min(p.b.length, S.pos + 4);
+      elB.innerHTML = esc(p.b.slice(0, S.pos)) + '<span class="caret"></span>';
+      elA.textContent = ""; cnt.textContent = "";
+      label(0);
+      if (S.pos >= p.b.length) { S.phase = 1; S.k = 0; paintBefore(p, 0, false); return 500; }
+      return 22;
+    case 1: // light up flagged phrases one by one
+      S.k++; label(1);
+      const sp = elB.querySelectorAll(".fl"); if (sp[S.k - 1]) sp[S.k - 1].classList.add("on");
+      if (S.k >= p.f.length) { S.phase = 2; count(p); return 1100; }
+      return 380;
+    case 2: // strike them through
+      elB.querySelectorAll(".fl").forEach((e) => e.classList.add("cut")); label(2);
+      S.phase = 3; S.pos = 0; return 1300;
+    case 3: // type the fixed version
+      S.pos = Math.min(p.a.length, S.pos + 3);
+      elA.innerHTML = esc(p.a.slice(0, S.pos)) + '<span class="caret"></span>';
+      label(3);
+      if (S.pos >= p.a.length) { elA.textContent = p.a; S.phase = 4; label(4); return 3600; }
+      return 24;
+    default: // next pair, loop
+      S.pair = (S.pair + 1) % set().length; S.phase = 0; S.pos = 0; dots(); return 250;
+  }
+}
+function run() { clearTimeout(S.timer); const d = step(); S.timer = setTimeout(function tick() { if (!S.playing) return; S.timer = setTimeout(tick, step()); }, d); }
+
+/* Static full view: used for reduced motion, and whenever paused on a fresh pair. */
+function showFinal() {
+  const p = set()[S.pair];
+  paintBefore(p, p.f.length, true); count(p); elA.textContent = p.a;
+  S.phase = 4; S.pos = p.a.length; S.k = p.f.length; label(4);
+}
+function btn() { const b = $("bafPlay"); b.textContent = S.playing ? t("bafPause") : t("bafPlay"); b.setAttribute("aria-pressed", String(S.playing)); }
+function start() { S.playing = true; btn(); if (S.phase === 4) { S.pair = (S.pair + 1) % set().length; S.phase = 0; S.pos = 0; dots(); } run(); }
+function stop() { S.playing = false; clearTimeout(S.timer); btn(); }
+function goto(i) { S.pair = i; S.phase = 0; S.pos = 0; S.k = 0; dots(); if (S.playing) run(); else showFinal(); }
+
+$("bafPlay").addEventListener("click", () => (S.playing ? stop() : start()));
+$("bafNext").addEventListener("click", () => goto((S.pair + 1) % set().length));
+$("bafDots").addEventListener("click", (e) => { const n = e.target.dataset.p; if (n !== undefined) goto(+n); });
+/* Stop the timers while the demo is off screen or the tab is hidden. */
+let visible = true;
+if ("IntersectionObserver" in window) new IntersectionObserver((es) => es.forEach((e) => {
+  visible = e.isIntersecting;
+  if (!visible) clearTimeout(S.timer); else if (S.playing) run();
+})).observe(document.querySelector(".baf"));
+document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(S.timer); else if (S.playing && visible) run(); });
+
+let lastSet = null;
+onLang(() => {
+  const s = set();
+  if (s !== lastSet) { lastSet = s; S.pair = 0; S.phase = 0; S.pos = 0; S.k = 0; }
+  dots(); btn();
+  if (S.playing) run(); else showFinal();
+});
+</script>

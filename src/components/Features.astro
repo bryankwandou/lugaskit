@@ -1,0 +1,54 @@
+<section id="how" data-rv-block>
+  <h2 data-i="howH">What it actually does</h2>
+  <p class="lede" data-i="howP" style="margin-bottom:24px">Six steps, one pass. The point is to stop the ten-retry loop, so it does not offer you three versions to choose between.</p>
+  <div class="how" id="howList"></div>
+</section>
+
+<section id="agents" data-rv-block>
+  <h2 data-i="agH">Works with the model you already use</h2>
+  <p class="lede" data-i="agP" style="margin-bottom:20px">The skill is plain Markdown. Anything that reads a system prompt can run it.</p>
+  <div class="atabs" id="atabs" role="tablist"></div>
+  <div class="apane" id="apane"></div>
+</section>
+
+<section id="install" data-rv-block>
+  <h2 data-i="instH">Instal</h2>
+  <ol class="steps">
+    <li><b>Claude Code</b><pre><button class="copy">Salin</button>git clone https://github.com/bryankwandou/lugas ~/.claude/skills/lugas</pre></li>
+    <li><b data-i="st2">Claude.ai</b><p data-i="st2p">Unduh ZIP repo, lalu unggah di Settings → Capabilities → Skills.</p></li>
+    <li><b data-i="st3">GPT, Gemini, model lain</b><p data-i="st3p">Tempel isi SKILL.md, file pola bahasa Anda, genres.md, dan checklist.md ke system prompt. Totalnya sekitar 4.000 token.</p></li>
+    <li><b data-i="st4">Pakai</b><pre><button class="copy">Salin</button>/lugas rapikan paragraf ini, terlalu kaku: ...</pre></li>
+  </ol>
+</section>
+
+<section data-rv-block>
+  <h2 data-i="genH">Dua belas jenis tulisan</h2>
+  <div class="grid" id="genres"></div>
+</section>
+
+<section id="fails" data-rv-block>
+  <h2 data-i="flH">Where it fails</h2>
+  <ul class="fails" id="failList"></ul>
+</section>
+
+<section id="batas" data-rv-block>
+  <h2 data-i="limH">Batasan</h2>
+  <p class="note" data-i="limP">Lugas memperbaiki mutu tulisan. Ia tidak menjanjikan skor detektor AI atau Turnitin, tidak menyamarkan karya orang lain, tidak menyisipkan typo atau karakter tersembunyi, dan tidak mengarang data atau sitasi. Detektor tidak andal ke dua arah, jadi angka apa pun tidak bisa dijamin secara jujur.</p>
+</section>
+<script>
+import { onLang, lang, t } from "../scripts/i18n.js";
+import { HOW, AG, FAIL, G } from "../scripts/data.js";
+let ag = 0;
+const idish = { id: 1, ms: 1, jv: 1, su: 1 };
+function render(L) {
+  document.getElementById("howList").innerHTML = (HOW[L] || HOW.en).map((x) => "<div><div><b>" + x[0] + "</b><span>" + x[1] + "</span></div></div>").join("");
+  const ags = AG[L] || AG.en; if (ag >= ags.length) ag = 0;
+  document.getElementById("atabs").innerHTML = ags.map((x, i) => '<button role="tab" aria-selected="' + (i === ag) + '" data-a="' + i + '">' + x[0] + "</button>").join("");
+  const a = ags[ag];
+  document.getElementById("apane").innerHTML = '<div class="fade"><p>' + a[1] + "</p>" + (a[2] ? '<pre><button class="copy">' + t("copy") + "</button>" + a[2] + "</pre>" : "") + "</div>";
+  document.getElementById("failList").innerHTML = (FAIL[L] || FAIL.en).map((x) => "<li>" + x + "</li>").join("");
+  document.getElementById("genres").innerHTML = G.map((g) => `<div><b>${idish[L] ? g[0] : g[1]}</b></div>`).join("");
+}
+document.getElementById("atabs").addEventListener("click", (e) => { const n = e.target.dataset.a; if (n !== undefined) { ag = +n; render(lang()); } });
+onLang(render);
+</script>

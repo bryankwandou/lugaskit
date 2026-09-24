@@ -1,0 +1,34 @@
+<div class="stats" id="stats" data-rv-block>
+  <div><b data-n="61608">61,608</b><span></span></div>
+  <div><b data-n="93.2" data-s="%">93.2%</b><span></span></div>
+  <div><b data-n="30">30</b><span></span></div>
+  <div><b data-n="515" data-s="">515</b><span></span></div>
+</div>
+<script>
+import { onLang, reduced } from "../scripts/i18n.js";
+import { S } from "../scripts/structure.js";
+const box = document.getElementById("stats");
+let L = "en", done = false;
+const fmt = (v, dec) => new Intl.NumberFormat(L === "jv" || L === "su" ? "id" : L, { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
+function paint(p) {
+  box.querySelectorAll("b").forEach((b) => {
+    const n = parseFloat(b.dataset.n), dec = b.dataset.n.includes(".") ? 1 : 0;
+    b.textContent = fmt(n * p, dec) + (b.dataset.s || "");
+  });
+}
+function run() {
+  if (done) return; done = true;
+  if (reduced()) return paint(1);
+  const t0 = performance.now(), D = 1400;
+  const step = (t) => { const k = Math.min(1, (t - t0) / D); paint(1 - Math.pow(1 - k, 3)); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+if ("IntersectionObserver" in window) new IntersectionObserver((es, o) => es.forEach((e) => { if (e.isIntersecting) { run(); o.disconnect(); } }), { threshold: 0.3 }).observe(box);
+else run();
+onLang((l) => {
+  L = l;
+  const lab = (S[l] || S.en).stats;
+  box.querySelectorAll("span").forEach((s, i) => (s.textContent = lab[i]));
+  paint(done ? 1 : 0);
+});
+</script>

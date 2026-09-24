@@ -1,0 +1,57 @@
+<section id="structure" data-rv-block>
+  <h2 id="stH">The layer under the words</h2>
+  <p class="lede" id="stP"></p>
+  <div class="atabs st-themes" id="stTabs" role="tablist"></div>
+  <div class="st-legend"><span class="st-k h"></span><span id="stLh">Human</span><span class="st-k a"></span><span id="stLa">AI</span><span class="st-lean" id="stLean"></span></div>
+  <div class="st-rows" id="stRows"></div>
+  <h3 class="st-h3" id="fpH">Each model has a signature</h3>
+  <p class="st-sub" id="fpP"></p>
+  <div class="atabs" id="fpTabs" role="tablist"></div>
+  <div class="fp" id="fpPane"></div>
+  <p class="note" id="stNote"></p>
+</section>
+<script>
+import { onLang, esc } from "../scripts/i18n.js";
+import { THEMES, FP, S } from "../scripts/structure.js";
+let L = "en", cur = 0, curM = "Claude", seen = false;
+const rowsBox = document.getElementById("stRows");
+if ("IntersectionObserver" in window) new IntersectionObserver((es, o) => es.forEach((e) => { if (e.isIntersecting) { seen = true; rowsBox.classList.add("go"); o.disconnect(); } }), { threshold: 0.25 }).observe(rowsBox);
+else seen = true;
+const s = () => S[L] || S.en;
+const fmt = (v, u) => (u === "%" ? Math.round(v) + "%" : (L === "id" || L === "es" || L === "jv" || L === "su" ? String(v.toFixed(2)).replace(".", ",") : v.toFixed(2)));
+function rows() {
+  const th = THEMES[cur], box = document.getElementById("stRows");
+  document.getElementById("stLean").textContent = th.side === "ai" ? s().aiLean : s().humanLean;
+  box.innerHTML = th.rows.map((r) => {
+    const label = L === "id" ? r[1] : r[0], m = Math.max(r[2], r[3]);
+    return `<div class="st-row"><div class="st-lab">${esc(label)}<span class="st-u">${r[4] === "%" ? "" : "/5"}</span></div>
+      <div class="st-bars"><div class="st-bar h" style="--w:${(r[2] / m) * 100}%"><i></i><span>${fmt(r[2], r[4])}</span></div>
+      <div class="st-bar a" style="--w:${(r[3] / m) * 100}%"><i></i><span>${fmt(r[3], r[4])}</span></div></div></div>`;
+  }).join("");
+  if (seen) requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("go")));
+}
+function tabs() {
+  document.getElementById("stTabs").innerHTML = THEMES.map((t, i) => `<button role="tab" aria-selected="${i === cur}" data-x="${i}">${esc(s().themes[t.k])}</button>`).join("");
+  document.getElementById("fpTabs").innerHTML = Object.keys(FP).map((k) => `<button role="tab" aria-selected="${k === curM}" data-m="${k}">${k === "Human" ? esc(s().human) : k}</button>`).join("");
+}
+function fp() {
+  const d = FP[curM], list = (L === "id" ? d.id : d.en);
+  document.getElementById("fpPane").innerHTML = `<div class="fp-top"><div class="fp-ring" style="--p:${d.f1 * 100}"><b>${Math.round(d.f1 * 100)}</b><small>F1</small></div>
+    <div><div class="fp-name">${curM === "Human" ? esc(s().human) : curM}</div><div class="fp-n">${d.n} ${esc(s().fpN)}</div></div></div>
+    <ul>${list.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+}
+document.getElementById("stTabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; cur = +b.dataset.x; document.getElementById("stRows").classList.remove("go"); tabs(); rows(); });
+document.getElementById("fpTabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; curM = b.dataset.m; tabs(); fp(); });
+onLang((l) => {
+  L = l;
+  document.getElementById("stH").textContent = s().h;
+  const n = document.getElementById("navStr"); if (n) n.textContent = s().nav;
+  document.getElementById("stP").textContent = s().p;
+  document.getElementById("stLh").textContent = s().human;
+  document.getElementById("stLa").textContent = s().ai;
+  document.getElementById("fpH").textContent = s().fpH;
+  document.getElementById("fpP").textContent = s().fpP;
+  document.getElementById("stNote").textContent = s().note;
+  tabs(); rows(); fp();
+});
+</script>

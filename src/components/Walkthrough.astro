@@ -1,0 +1,51 @@
+<section id="walk" data-rv-block>
+  <h2 data-i="wkH">Watch one pass</h2>
+  <p class="lede" data-i="wkP" style="margin-bottom:20px">The same rules that run in the checker below, applied step by step to one paragraph.</p>
+  <div class="wt">
+    <div class="wtbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="wtstep" id="wtStep"></span><button class="wtplay" id="wtPlay"></button></div>
+    <div class="wtprog"><i id="wtBar"></i></div>
+    <div class="wtbody" id="wtBody"></div>
+  </div>
+</section>
+<script>
+import { onLang, lang, t, esc, reduced } from "../scripts/i18n.js";
+import { WT, PAT } from "../scripts/data.js";
+var wtT=[],wtPlaying=false,wtRun=0;
+function wtClear(){wtT.forEach(clearTimeout);wtT=[];wtRun++}
+function wtAt(ms,fn){wtT.push(setTimeout(fn,ms))}
+function wtPlay(){
+  wtClear();var my=wtRun;var d=WT[lang()]||WT.en;
+  var body=document.getElementById("wtBody"),stepEl=document.getElementById("wtStep"),bar=document.getElementById("wtBar");
+  document.getElementById("wtPlay").textContent=t("wkPlay");
+  function stage(n,html){stepEl.textContent=(n+1)+"/6 \u00b7 "+d.steps[n];bar.style.width=((n+1)/6*100)+"%";body.innerHTML='<div class="cue">'+d.cues[n]+"</div>"+html}
+
+  stage(0,'<span class="caret"></span>');
+  var raw=d.raw,typed=0;
+  function type(){if(my!==wtRun)return;typed+=3;body.innerHTML='<div class="cue">'+d.cues[0]+"</div>"+esc(raw.slice(0,typed))+'<span class="caret"></span>';if(typed<raw.length)wtT.push(setTimeout(type,18))}
+  type();
+  var t0=Math.ceil(raw.length/3)*18+500;
+  wtAt(t0,function(){stage(1,"<ul>"+d.facts.map(function(f){return"<li>"+f+"</li>"}).join("")+"</ul>")});
+  wtAt(t0+2200,function(){
+    var marks=[];PAT.forEach(function(pr){var re=pr[0];re.lastIndex=0;var m;while((m=re.exec(raw))){if(m[0].length)marks.push([m.index,m.index+m[0].length]);if(re.lastIndex===m.index)re.lastIndex++}});
+    marks.sort(function(a,b){return a[0]-b[0]||b[1]-a[1]});
+    var mg=[];marks.forEach(function(m){if(mg.length&&m[0]<mg[mg.length-1][1])return;mg.push(m)});
+    var h="",i=0,cut=0;mg.forEach(function(m){h+=esc(raw.slice(i,m[0]))+'<span class="hit">'+esc(raw.slice(m[0],m[1]))+"</span>";i=m[1];cut+=raw.slice(m[0],m[1]).split(/\s+/).filter(Boolean).length});
+    h+=esc(raw.slice(i));
+    var tot=raw.split(/\s+/).filter(Boolean).length;
+    stage(2,h+'<div class="why">'+Math.round(cut/tot*100)+"% \u2014 "+cut+"/"+tot+"</div>")});
+  wtAt(t0+5200,function(){stage(3,d.out)});
+  wtAt(t0+7400,function(){stage(4,d.out+'<div class="why">'+d.note+"</div>")});
+  wtAt(t0+9600,function(){stage(5,d.out+'<div class="why">'+d.note+"</div>")});
+}
+document.getElementById("wtPlay").onclick=wtPlay;
+if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&!wtPlaying){wtPlaying=true;wtPlay()}})},{threshold:.35});
+  io.observe(document.getElementById("walk"));
+  var wtPoll=setInterval(function(){
+    if(wtPlaying){clearInterval(wtPoll);return}
+    var r=document.getElementById("walk").getBoundingClientRect();
+    if(r.top<innerHeight*0.85&&r.bottom>0){wtPlaying=true;clearInterval(wtPoll);wtPlay()}
+  },250);
+}else{var d0=WT[lang()]||WT.en;document.getElementById("wtBody").textContent=d0.out;document.getElementById("wtStep").textContent="6/6";}
+onLang(()=>{document.getElementById("wtPlay").textContent=t("wkPlay")});
+</script>

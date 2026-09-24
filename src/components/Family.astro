@@ -1,0 +1,22 @@
+<section id="family" data-rv-block>
+  <h2 id="famH">Four skills, one standard</h2>
+  <p class="lede" id="famP"></p>
+  <div class="fam" id="famList"></div>
+</section>
+<script>
+import { onLang, esc } from "../scripts/i18n.js";
+import { S } from "../scripts/structure.js";
+const ICON = {
+  lugas: '<path d="M4 6h16M4 12h10M4 18h7"/>',
+  rangka: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/>',
+  pedoman: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13l2 2 4-4"/>',
+  atmajaya: '<path d="M3 10l9-5 9 5-9 5z"/><path d="M7 12v5c3 2 7 2 10 0v-5"/>',
+};
+onLang((L) => {
+  const s = S[L] || S.en;
+  document.getElementById("famH").textContent = s.famH;
+  document.getElementById("famP").textContent = s.famP;
+  document.getElementById("famList").innerHTML = s.fam.map(([k, d]) =>
+    `<a class="fam-c${k === "lugas" ? " on" : ""}" href="https://github.com/bryankwandou/${k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg><b>${k}</b><span>${esc(d)}</span><em aria-hidden="true">→</em></a>`).join("");
+});
+</script>

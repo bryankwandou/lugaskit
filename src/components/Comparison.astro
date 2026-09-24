@@ -1,0 +1,15 @@
+<section id="compare" data-rv-block>
+  <h2 data-i="cmpH">Without Lugas, with Lugas</h2>
+  <p class="lede" data-i="cmpP">What changes when the model follows the skill.</p>
+  <div class="cmp">
+    <div class="cmp-head"><div class="cmp-no" data-i="cmpA">Without</div><div class="cmp-yes" data-i="cmpB">With Lugas</div></div>
+    <div id="cmpRows"></div>
+  </div>
+</section>
+<script>
+import { onLang } from "../scripts/i18n.js";
+import { CMP } from "../scripts/content.js";
+onLang((L) => {
+  document.getElementById("cmpRows").innerHTML = (CMP[L] || CMP.en).map((r) => `<div class="cmp-row"><div class="cmp-no"><span aria-hidden="true">✕</span>${r[0]}</div><div class="cmp-yes"><span aria-hidden="true">✓</span>${r[1]}</div></div>`).join("");
+});
+</script>
